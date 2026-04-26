@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS admins (
 
 -- Insertar productos de ejemplo (opcional)
 INSERT INTO products (name, description, price, image_url, category) VALUES
-  ('Apple Premium', 'Manzana Premium de la mejor calidad', 3500, '/hypertecnologian/Apple.jpg', 'Fruta'),
-  ('Reloj Luxus Gold', 'Reloj de lujo estilo oro', 2400000, '/hypertecnologian/reloj_luxus.jpg', 'Accesorio'),
-  ('Gafas Urban', 'Gafas estilo urbano', 185000, '/hypertecnologian/Gafas.jpg', 'Moda')
+  ('Apple Premium', 'Manzana Premium de la mejor calidad', 3500, '/images/Apple.jpg', 'Fruta'),
+  ('Reloj Luxus Gold', 'Reloj de lujo estilo oro', 2400000, '/images/reloj_luxus.jpg', 'Accesorio'),
+  ('Gafas Urban', 'Gafas estilo urbano', 185000, '/images/Gafas.jpg', 'Moda')
 ON CONFLICT DO NOTHING;
