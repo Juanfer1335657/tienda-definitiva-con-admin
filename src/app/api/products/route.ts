@@ -1,8 +1,8 @@
-export const dynamic = 'force-dynamic';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
       name: data.name,
       description: data.description || null,
       price: data.price,
-      image_url: data.image_url || null,
       category: data.category || null,
+      images: data.images || [],
     });
 
     return NextResponse.json(product);

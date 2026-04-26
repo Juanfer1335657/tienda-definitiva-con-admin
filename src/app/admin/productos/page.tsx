@@ -4,13 +4,20 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 
+interface ProductImage {
+  id: number;
+  product_id: number;
+  image_url: string;
+  is_primary: boolean;
+}
+
 interface Product {
   id: number;
   name: string;
   description: string | null;
   price: number;
-  image_url: string | null;
   category: string | null;
+  images?: ProductImage[];
 }
 
 function formatPrice(price: number): string {
@@ -31,7 +38,7 @@ export default function AdminProducts() {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
-      if (mountedRef.current) setProducts(data);
+      if (mountedRef.current) setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -185,7 +192,7 @@ export default function AdminProducts() {
             }}
           >
             <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>
-              No hay productos yet
+              No hay productos
             </p>
             <Link
               href="/admin/productos/nuevo"
@@ -207,7 +214,7 @@ export default function AdminProducts() {
               <thead>
                 <tr style={{ backgroundColor: '#f5f5f5' }}>
                   <th style={{ padding: 16, textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                    Imagen
+                    Imágenes
                   </th>
                   <th style={{ padding: 16, textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
                     Nombre
@@ -235,16 +242,39 @@ export default function AdminProducts() {
                       style={{ borderTop: '1px solid #eee' }}
                     >
                       <td style={{ padding: 16 }}>
-                        <img
-                          src={product.image_url || '/hypertecnologian/placeholder.jpg'}
-                          alt={product.name}
-                          style={{
-                            width: 60,
-                            height: 60,
-                            objectFit: 'cover',
-                            borderRadius: 8,
-                          }}
-                        />
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {product.images?.slice(0, 3).map((img) => (
+                            <img
+                              key={img.id}
+                              src={img.image_url}
+                              alt=""
+                              style={{
+                                width: 50,
+                                height: 50,
+                                objectFit: 'cover',
+                                borderRadius: 8,
+                                border: img.is_primary ? '2px solid var(--accent)' : '1px solid #eee',
+                              }}
+                            />
+                          ))}
+                          {(product.images?.length || 0) > 3 && (
+                            <div
+                              style={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: 8,
+                                backgroundColor: '#f0f0f0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                color: 'var(--text-secondary)',
+                              }}
+                            >
+                              +{product.images!.length - 3}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td style={{ padding: 16 }}>
                         <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>

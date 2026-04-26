@@ -1,14 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import ShippingCalculator, { ShippingData } from './ShippingCalculator';
 
 export interface Product {
   id: number;
   name: string;
   description: string | null;
   price: number;
-  image_url: string | null;
   category: string | null;
+  images?: { id: number; product_id: number; image_url: string; is_primary: boolean }[];
 }
 
 interface CartModalProps {
@@ -36,7 +38,20 @@ export default function CartModal({
   onClear,
   whatsappNumber,
 }: CartModalProps) {
+  const [showShipping, setShowShipping] = useState(false);
+  const [shippingData, setShippingData] = useState<ShippingData | null>(null);
   const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+  const getProductImage = (product: Product): string => {
+    const primary = product.images?.find(img => img.is_primary);
+    const first = product.images?.[0];
+    return primary?.image_url || first?.image_url || '';
+  };
+
+  const handleShippingCalculate = (data: ShippingData) => {
+    setShippingData(data);
+    setShowShipping(false);
+  };
 
   const generateWhatsAppMessage = () => {
     if (cart.length === 0) return '';
@@ -44,13 +59,37 @@ export default function CartModal({
     let message = 'Nuevo Pedido!%0A%0A';
     
     cart.forEach((item) => {
-      message += `${item.name} - $${item.price.toLocaleString('es-CO')}%0A`;
+      message += `${item.name} - ${formatPrice(item.price)}%0A`;
     });
     
-    message += '%0A%0ATotal: $' + total.toLocaleString('es-CO');
-    message += '%0A%0AHola! Quiero hacer este pedido';
+    const finalTotal = total + (shippingData?.shippingPrice || 0);
+    message += '%0A%0A--- Detalles de Envío ---%0A';
+    message += `Dirección: ${shippingData?.address}%0A`;
+    message += `${shippingData?.city}, ${shippingData?.department}%0A`;
+    message += `Transportadora: ${shippingData?.provider === 'servientrega' ? 'Servientrega' : 'Interrapidisimo'}%0A`;
+    message += `Tiempo estimado: ${shippingData?.estimatedDays}%0A`;
+    
+    message += '%0A%0ATotal productos: ' + formatPrice(total) + '%0A';
+    if (shippingData?.shippingPrice === 0) {
+      message += 'Envío: GRATIS%0A';
+    } else {
+      message += 'Envío: ' + formatPrice(shippingData?.shippingPrice || 0) + '%0A';
+    }
+    message += 'Total: ' + formatPrice(finalTotal) + '%0A';
+    message += '%0AHola! Quiero hacer este pedido';
     
     return message;
+  };
+
+  const handleCheckout = () => {
+    if (shippingData) {
+      window.open(
+        `https://wa.me/${whatsappNumber}?text=${generateWhatsAppMessage()}`,
+        '_blank'
+      );
+    } else {
+      setShowShipping(true);
+    }
   };
 
   return (
@@ -149,7 +188,7 @@ export default function CartModal({
                       }}
                     >
                       <img
-                        src={item.image_url || '/hypertecnologian/placeholder.jpg'}
+                        src={getProductImage(item)}
                         alt={item.name}
                         style={{
                           width: 60,
@@ -193,6 +232,33 @@ export default function CartModal({
                   ))}
                 </div>
 
+                {shippingData && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      backgroundColor: '#f0f9f4',
+                      padding: 16,
+                      borderRadius: 12,
+                      marginBottom: 16,
+                      border: '1px solid var(--accent)',
+                    }}
+                  >
+                    <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+                      Envío calculado:
+                    </p>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      📍 {shippingData.address}, {shippingData.city}
+                    </p>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                      🚚 {shippingData.provider === 'servientrega' ? 'Servientrega' : 'Interrapidisimo'} - {shippingData.estimatedDays}
+                    </p>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)' }}>
+                      {shippingData.shippingPrice === 0 ? 'Envío GRATIS' : 'Envío: ' + formatPrice(shippingData.shippingPrice)}
+                    </p>
+                  </motion.div>
+                )}
+
                 <div
                   style={{
                     borderTop: '2px solid var(--accent)',
@@ -205,12 +271,42 @@ export default function CartModal({
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 16, color: 'var(--text-secondary)' }}>
+                      Subtotal:
+                    </span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {formatPrice(total)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 16, color: 'var(--text-secondary)' }}>
+                      Envío:
+                    </span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: shippingData?.shippingPrice === 0 ? 'var(--accent)' : 'var(--text-primary)' }}>
+                      {shippingData ? (shippingData.shippingPrice === 0 ? 'GRATIS' : formatPrice(shippingData.shippingPrice)) : 'Por calcular'}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
                     <span
                       style={{
                         fontSize: 18,
-                        fontWeight: 600,
+                        fontWeight: 700,
                         color: 'var(--text-primary)',
                       }}
                     >
@@ -223,58 +319,83 @@ export default function CartModal({
                         color: 'var(--accent)',
                       }}
                     >
-                      {formatPrice(total)}
+                      {formatPrice(total + (shippingData?.shippingPrice || 0))}
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <motion.a
-                    href={`https://wa.me/${whatsappNumber}?text=${generateWhatsAppMessage()}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <motion.button
+                    onClick={handleCheckout}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     style={{
-                      flex: 1,
                       padding: 14,
                       backgroundColor: 'var(--accent)',
                       color: 'white',
                       border: 'none',
                       borderRadius: 12,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      textDecoration: 'none',
-                      display: 'block',
-                    }}
-                  >
-                    Comprar por WhatsApp
-                  </motion.a>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onClear}
-                    style={{
-                      padding: 14,
-                      backgroundColor: '#fee',
-                      color: '#d00',
-                      border: 'none',
-                      borderRadius: 12,
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
                   >
-                    Vaciar
+                    {shippingData ? 'Comprar por WhatsApp' : 'Calcular Envío y Comprar'}
                   </motion.button>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={onClear}
+                      style={{
+                        flex: 1,
+                        padding: 14,
+                        backgroundColor: '#fee',
+                        color: '#d00',
+                        border: 'none',
+                        borderRadius: 12,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Vaciar
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setShowShipping(true)}
+                      style={{
+                        flex: 1,
+                        padding: 14,
+                        backgroundColor: '#f0f0f0',
+                        color: 'var(--text-primary)',
+                        border: 'none',
+                        borderRadius: 12,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cambiar Envío
+                    </motion.button>
+                  </div>
                 </div>
               </>
             )}
           </motion.div>
         </motion.div>
       )}
+      
+      <AnimatePresence>
+        {showShipping && (
+          <ShippingCalculator
+            total={total}
+            onCalculate={handleShippingCalculate}
+            onClose={() => setShowShipping(false)}
+          />
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 }

@@ -8,8 +8,8 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;
-  image_url: string | null;
   category: string | null;
+  images?: { id: number; product_id: number; image_url: string; is_primary: boolean }[];
 }
 
 interface ProductCardProps {
@@ -27,6 +27,17 @@ function formatPrice(price: number): string {
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const images = product.images || [];
+  const primaryImage = images.find(img => img.is_primary) || images[0];
+  const currentImage = images[currentImageIndex] || primaryImage;
+
+  const nextImage = () => {
+    if (images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }
+  };
 
   return (
     <motion.div
@@ -45,9 +56,19 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         transition: 'box-shadow 0.3s ease',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', overflow: 'hidden', backgroundColor: '#f9f9f9' }}>
+      <div 
+        style={{ 
+          position: 'relative', 
+          width: '100%', 
+          aspectRatio: '1 / 1', 
+          overflow: 'hidden', 
+          backgroundColor: '#f9f9f9',
+          cursor: images.length > 1 ? 'pointer' : 'default',
+        }}
+        onClick={images.length > 1 ? nextImage : undefined}
+      >
         <motion.img
-          src={product.image_url || '/hypertecnologian/placeholder.jpg'}
+          src={currentImage?.image_url || '/placeholder.jpg'}
           alt={product.name}
           style={{
             width: '100%',
@@ -57,6 +78,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.4 }}
         />
+        
         {product.category && (
           <motion.span
             initial={{ opacity: 0, x: -10 }}
@@ -76,6 +98,41 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           >
             {product.category}
           </motion.span>
+        )}
+
+        {images.length > 1 && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 12,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: 6,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex(index);
+                  }}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    border: 'none',
+                    backgroundColor: index === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
       <div style={{ padding: 20 }}>

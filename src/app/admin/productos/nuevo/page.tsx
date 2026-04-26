@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default function NewProduct() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [preview, setPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -17,14 +17,25 @@ export default function NewProduct() {
   const router = useRouter();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newPreviews: string[] = [];
+    
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string);
+        newPreviews.push(reader.result as string);
+        if (newPreviews.length === Array.from(files).length) {
+          setPreviews((prev) => [...prev, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
-    }
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,21 +44,21 @@ export default function NewProduct() {
     setLoading(true);
 
     try {
-      let imageUrl = '';
+      const imageUrls: string[] = [];
       
-      if (preview) {
+      for (let i = 0; i < previews.length; i++) {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            image: preview, 
-            name: name.toLowerCase().replace(/\s+/g, '-') + '.jpg' 
+            image: previews[i], 
+            name: name.toLowerCase().replace(/\s+/g, '-') + '-' + i + '.jpg' 
           }),
         });
         
         if (res.ok) {
           const data = await res.json();
-          imageUrl = data.url;
+          imageUrls.push(data.url);
         }
       }
 
@@ -58,8 +69,8 @@ export default function NewProduct() {
           name,
           description,
           price: parseInt(price),
-          image_url: imageUrl,
           category,
+          images: imageUrls,
         }),
       });
 
@@ -140,12 +151,13 @@ export default function NewProduct() {
                   marginBottom: 8,
                 }}
               >
-                Imagen del Producto
+                Imágenes del Producto (múltiples)
               </label>
               <input
                 type="file"
                 ref={fileInputRef}
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 style={{ display: 'none' }}
               />
@@ -153,27 +165,87 @@ export default function NewProduct() {
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   width: '100%',
-                  height: 200,
+                  minHeight: 120,
                   border: '2px dashed #ddd',
                   borderRadius: 'var(--radius)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  overflow: 'hidden',
-                  backgroundColor: preview ? 'transparent' : '#f9f9f9',
+                  backgroundColor: '#f9f9f9',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  padding: 16,
                 }}
               >
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
-                ) : (
+                {previews.length === 0 ? (
                   <p style={{ color: 'var(--text-secondary)' }}>
-                    Click para seleccionar imagen
+                    Click para seleccionar imágenes
                   </p>
+                ) : (
+                  previews.map((preview, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        position: 'relative',
+                        width: 80,
+                        height: 80,
+                      }}
+                    >
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(index);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: '#d00',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        ×
+                      </button>
+                      {index === 0 && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: -4,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            backgroundColor: 'var(--accent)',
+                            color: 'white',
+                            fontSize: 10,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                          }}
+                        >
+                          Principal
+                        </span>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             </div>

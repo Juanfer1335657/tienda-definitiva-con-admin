@@ -12,7 +12,8 @@ export default function EditProduct() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState('');
-  const [preview, setPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -31,7 +32,9 @@ export default function EditProduct() {
       setDescription(data.description || '');
       setPrice(data.price.toString());
       setCategory(data.category || '');
-      setPreview(data.image_url);
+      
+      const imageUrls = data.images?.map((img: { image_url: string }) => img.image_url) || [];
+      setExistingImages(imageUrls);
     } catch (err) {
       console.error('Error fetching product:', err);
       router.push('/admin/productos');
@@ -46,14 +49,29 @@ export default function EditProduct() {
   }, [fetchProduct]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newPreviews: string[] = [];
+    
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string);
+        newPreviews.push(reader.result as string);
+        if (newPreviews.length === Array.from(files).length) {
+          setPreviews((prev) => [...prev, ...newPreviews]);
+        }
       };
       reader.readAsDataURL(file);
-    }
+    });
+  };
+
+  const removePreviewImage = (index: number) => {
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,21 +80,21 @@ export default function EditProduct() {
     setLoading(true);
 
     try {
-      let imageUrl = preview || '';
+      const allImages: string[] = [...existingImages];
       
-      if (preview && preview.startsWith('data:')) {
+      for (let i = 0; i < previews.length; i++) {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            image: preview, 
-            name: id + '-' + name.toLowerCase().replace(/\s+/g, '-') + '.jpg' 
+            image: previews[i], 
+            name: id + '-' + name.toLowerCase().replace(/\s+/g, '-') + '-' + i + '.jpg' 
           }),
         });
         
         if (res.ok) {
           const data = await res.json();
-          imageUrl = data.url;
+          allImages.push(data.url);
         }
       }
 
@@ -88,8 +106,8 @@ export default function EditProduct() {
           name,
           description,
           price: parseInt(price),
-          image_url: imageUrl,
           category,
+          images: allImages,
         }),
       });
 
@@ -196,40 +214,154 @@ export default function EditProduct() {
                   marginBottom: 8,
                 }}
               >
-                Imagen del Producto
+                Imágenes del Producto (múltiples)
               </label>
               <input
                 type="file"
                 ref={fileInputRef}
                 accept="image/*"
+                multiple
                 onChange={handleImageChange}
                 style={{ display: 'none' }}
               />
+              
+              <div style={{ marginBottom: 12 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  Imágenes actuales
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                  {existingImages.map((url, index) => (
+                    <div
+                      key={`existing-${index}`}
+                      style={{
+                        position: 'relative',
+                        width: 80,
+                        height: 80,
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt={`Imagen ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(index)}
+                        style={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: '#d00',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        ×
+                      </button>
+                      {index === 0 && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: -4,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            backgroundColor: 'var(--accent)',
+                            color: 'white',
+                            fontSize: 10,
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                          }}
+                        >
+                          Principal
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
               <div
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   width: '100%',
-                  height: 200,
+                  minHeight: 80,
                   border: '2px dashed #ddd',
                   borderRadius: 'var(--radius)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  overflow: 'hidden',
-                  backgroundColor: preview ? '#f9f9f9' : '#f9f9f9',
+                  backgroundColor: '#f9f9f9',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  padding: 16,
                 }}
               >
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
-                ) : (
+                {previews.length === 0 ? (
                   <p style={{ color: 'var(--text-secondary)' }}>
-                    Click para seleccionar imagen
+                    + Agregar más imágenes
                   </p>
+                ) : (
+                  previews.map((preview, index) => (
+                    <div
+                      key={`new-${index}`}
+                      style={{
+                        position: 'relative',
+                        width: 80,
+                        height: 80,
+                      }}
+                    >
+                      <img
+                        src={preview}
+                        alt={`Nuevo ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                          opacity: 0.7,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removePreviewImage(index);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: '#d00',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
