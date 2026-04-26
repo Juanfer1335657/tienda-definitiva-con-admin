@@ -88,12 +88,14 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
   const cities = department ? departments.find(d => d.name === department)?.cities || [] : [];
 
   const validateAddress = (addr: string): boolean => {
+    const cleaned = addr.trim().toLowerCase();
     const patterns = [
-      /^(Carrera|Cra|Calle|Cl|Transversal|Transv|Av\.?|Avenida|Diagonal|Diag)\s*\d+[\s#\-]\d+[\sA-Za-z]*$/i,
-      /^(Carrera|Cra|Calle|Cl|Transversal|Transv|Av\.?|Avenida|Diagonal|Diag)\s*\d+[\s\-]\d+$/i,
-      /^\d+[\s#\-]\d+[\sA-Za-z]*$/i,
+      /^(carrera|cra|calle|cl|transversal|transv|av\.?|avenida|diagonal|diag)\s+\d+[\s#\-]?\d*[\s,]*[\w\s]*$/i,
+      /^\d+[\s#\-]\d+[\s,]*[\w\s]*$/i,
+      /^(carrera|cra|calle|cl)\s+\d+$/i,
+      /^(transversal|transv|av\.?|avenida|diagonal|diag)\s+\d+$/i,
     ];
-    return patterns.some(p => p.test(addr.trim()));
+    return patterns.some(p => p.test(cleaned));
   };
 
   const handleAddressChange = (value: string) => {
@@ -271,7 +273,7 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
             <p style={{ fontSize: 12, color: '#d00', marginTop: 4 }}>{addressError}</p>
           )}
           <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
-            Formato: Cra/Calle # número - número, Apartamento/Torre
+            Formato: Cra/Calle/Av + número (ej: Cra 9, Calle 2, Av 15 #45-67)
           </p>
         </div>
 
