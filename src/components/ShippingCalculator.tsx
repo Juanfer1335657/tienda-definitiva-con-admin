@@ -86,16 +86,19 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
 
   const cities = department ? departments.find(d => d.name === department)?.cities || [] : [];
 
+  const autoPricing = department ? getShippingPrice('servientrega', department) : null;
+
   const handleCalculate = () => {
-    if (!department || !city || !address || !selectedProvider) return;
+    if (!department || !city || !address) return;
     
-    const { price, days } = getShippingPrice(selectedProvider, department);
+    const provider = selectedProvider || 'servientrega';
+    const { price, days } = getShippingPrice(provider, department);
     
     onCalculate({
       department,
       city,
       address,
-      provider: selectedProvider,
+      provider,
       shippingPrice: price,
       estimatedDays: days,
     });
@@ -105,7 +108,7 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
     setSelectedProvider(provider);
   };
 
-  const selectedPricing = selectedProvider && department ? getShippingPrice(selectedProvider, department) : null;
+  const selectedPricing = (selectedProvider || 'servientrega') && department ? getShippingPrice(selectedProvider || 'servientrega', department) : null;
 
   return (
     <motion.div
@@ -284,7 +287,7 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
           </div>
         )}
 
-        {selectedProvider && department && (
+        {department && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -303,16 +306,16 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
               📍 De: {WAREHOUSE.city}, {WAREHOUSE.department}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              📍 Hacia: {city}, {department}
+              📍 Hacia: {city || '...'}, {department}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-              🚚 Transportadora: {selectedProvider === 'servientrega' ? 'Servientrega' : 'Interrapidisimo'}
+              🚚 Transportadora: {selectedProvider === 'interrapidisimo' ? 'Interrapidisimo' : 'Servientrega'}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              ⏱️ Tiempo estimado: {selectedPricing?.days}
+              ⏱️ Tiempo estimado: {autoPricing?.days}
             </p>
             <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)', marginTop: 8 }}>
-              Costo de envío: ${selectedPricing?.price.toLocaleString('es-CO')}
+              Costo de envío: ${autoPricing?.price.toLocaleString('es-CO')}
             </p>
           </motion.div>
         )}
@@ -320,19 +323,19 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
         <div style={{ display: 'flex', gap: 12 }}>
           <motion.button
             onClick={handleCalculate}
-            disabled={!department || !city || !address || !selectedProvider}
-            whileHover={{ scale: selectedProvider ? 1.02 : 1 }}
-            whileTap={{ scale: selectedProvider ? 0.98 : 1 }}
+            disabled={!department || !city || !address}
+            whileHover={{ scale: department && city && address ? 1.02 : 1 }}
+            whileTap={{ scale: department && city && address ? 0.98 : 1 }}
             style={{
               flex: 1,
               padding: 14,
-              backgroundColor: selectedProvider ? 'var(--accent)' : '#ccc',
+              backgroundColor: department && city && address ? 'var(--accent)' : '#ccc',
               color: 'white',
               border: 'none',
               borderRadius: 12,
               fontSize: 16,
               fontWeight: 600,
-              cursor: selectedProvider ? 'pointer' : 'not-allowed',
+              cursor: department && city && address ? 'pointer' : 'not-allowed',
             }}
           >
             Confirmar Envío

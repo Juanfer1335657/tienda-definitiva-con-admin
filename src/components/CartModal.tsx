@@ -56,27 +56,25 @@ export default function CartModal({
   const generateWhatsAppMessage = () => {
     if (cart.length === 0) return '';
     
-    let message = 'Nuevo Pedido!%0A%0A';
+    let message = '🛒 *Nuevo Pedido - Hypertecnologian*\n\n';
     
     cart.forEach((item) => {
-      message += `${item.name} - ${formatPrice(item.price)}%0A`;
+      message += `• ${item.name} - ${formatPrice(item.price)}\n`;
     });
     
     const finalTotal = total + (shippingData?.shippingPrice || 0);
-    message += '%0A%0A--- Detalles de Envío ---%0A';
-    message += `Dirección: ${shippingData?.address}%0A`;
-    message += `${shippingData?.city}, ${shippingData?.department}%0A`;
-    message += `Transportadora: ${shippingData?.provider === 'servientrega' ? 'Servientrega' : 'Interrapidisimo'}%0A`;
-    message += `Tiempo estimado: ${shippingData?.estimatedDays}%0A`;
-    
-    message += '%0A%0ATotal productos: ' + formatPrice(total) + '%0A';
-    if (shippingData?.shippingPrice === 0) {
-      message += 'Envío: GRATIS%0A';
-    } else {
-      message += 'Envío: ' + formatPrice(shippingData?.shippingPrice || 0) + '%0A';
-    }
-    message += 'Total: ' + formatPrice(finalTotal) + '%0A';
-    message += '%0AHola! Quiero hacer este pedido';
+    message += '\n━━━━━━━━━━━━━━━━━━━━\n';
+    message += '📦 *Detalles de Envío*\n';
+    message += `📍 Dirección: ${shippingData?.address}\n`;
+    message += `🏙️ Ciudad: ${shippingData?.city}, ${shippingData?.department}\n`;
+    message += `🚚 Transportadora: ${shippingData?.provider === 'servientrega' ? 'Servientrega' : 'Interrapidisimo'}\n`;
+    message += `⏱️ Tiempo: ${shippingData?.estimatedDays}\n`;
+    message += '━━━━━━━━━━━━━━━━━━━━\n\n';
+    message += `💰 *Subtotal:* ${formatPrice(total)}\n`;
+    message += `📬 *Envío:* ${shippingData?.shippingPrice === 0 ? 'GRATIS' : formatPrice(shippingData?.shippingPrice || 0)}\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `✨ *TOTAL:* ${formatPrice(finalTotal)}\n\n`;
+    message += '¡Hola! Quiero hacer este pedido. 📱';
     
     return message;
   };
@@ -84,7 +82,7 @@ export default function CartModal({
   const handleCheckout = () => {
     if (shippingData) {
       window.open(
-        `https://wa.me/${whatsappNumber}?text=${generateWhatsAppMessage()}`,
+        `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(generateWhatsAppMessage())}`,
         '_blank'
       );
     } else {
