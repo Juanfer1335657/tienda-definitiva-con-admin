@@ -28,45 +28,17 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const mountedRef = useRef(false);
 
-  const localProducts: Product[] = [
-    {
-      id: 901,
-      name: 'Apple Premium',
-      description: 'Manzana Premium de la mejor calidad',
-      price: 3500,
-      image_url: '/images/Apple.jpg',
-      category: 'Fruta',
-    },
-    {
-      id: 902,
-      name: 'Reloj Luxus Gold',
-      description: 'Reloj de lujo estilo oro',
-      price: 2400000,
-      image_url: '/images/reloj_luxus.jpg',
-      category: 'Accesorio',
-    },
-    {
-      id: 903,
-      name: 'Gafas Urban',
-      description: 'Gafas estilo urbano',
-      price: 185000,
-      image_url: '/images/Gafas.jpg',
-      category: 'Moda',
-    },
-  ];
-
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
       if (mountedRef.current) {
-        const dbProducts = Array.isArray(data) ? data : [];
-        setProducts([...dbProducts, ...localProducts]);
+        setProducts(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
       if (mountedRef.current) {
-        setProducts(localProducts);
+        setProducts([]);
       }
     } finally {
       if (mountedRef.current) setLoading(false);
