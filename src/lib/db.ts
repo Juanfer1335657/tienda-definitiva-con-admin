@@ -33,7 +33,7 @@ export async function createProduct(data: Omit<Product, 'id' | 'created_at'>): P
 
 export async function updateProduct(id: number, data: Partial<Omit<Product, 'id' | 'created_at'>>): Promise<Product> {
   const sets: string[] = [];
-  const values: any[] = [];
+  const values: unknown[] = [];
   let idx = 1;
 
   if (data.name !== undefined) {

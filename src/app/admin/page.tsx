@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
+import Link from 'next/link';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -30,8 +31,8 @@ export default function AdminLogin() {
       }
 
       router.push('/admin/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -194,7 +195,7 @@ export default function AdminLogin() {
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </motion.button>
 
-          <a
+          <Link
             href="/"
             style={{
               display: 'block',
@@ -205,7 +206,7 @@ export default function AdminLogin() {
             }}
           >
             ← Volver a la tienda
-          </a>
+          </Link>
         </form>
       </motion.div>
     </div>

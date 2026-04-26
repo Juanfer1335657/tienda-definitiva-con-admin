@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 
@@ -26,23 +25,26 @@ export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
-  const router = useRouter();
+  const mountedRef = useRef(false);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
-      setProducts(data);
+      if (mountedRef.current) setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProducts();
+    return () => { mountedRef.current = false; };
+  }, [fetchProducts]);
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;

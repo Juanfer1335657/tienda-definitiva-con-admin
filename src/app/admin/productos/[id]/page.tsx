@@ -1,18 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import Link from 'next/link';
-
-interface Product {
-  id: number;
-  name: string;
-  description: string | null;
-  price: number;
-  image_url: string | null;
-  category: string | null;
-}
 
 export default function EditProduct() {
   const params = useParams();
@@ -29,11 +20,7 @@ export default function EditProduct() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchProduct();
-  }, [id]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const res = await fetch(`/api/products/${id}`);
       if (!res.ok) {
@@ -51,7 +38,12 @@ export default function EditProduct() {
     } finally {
       setFetching(false);
     }
-  };
+  }, [id, router]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProduct();
+  }, [fetchProduct]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,8 +98,8 @@ export default function EditProduct() {
       }
 
       router.push('/admin/productos');
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar producto');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al actualizar producto');
     } finally {
       setLoading(false);
     }

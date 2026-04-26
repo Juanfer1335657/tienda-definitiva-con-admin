@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Header from '@/components/Header';
 import ProductCard, { Product } from '@/components/ProductCard';
@@ -26,56 +26,65 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mountedRef = useRef(false);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchProducts();
-  }, []);
+  const localProducts: Product[] = [
+    {
+      id: 901,
+      name: 'Apple Premium',
+      description: 'Manzana Premium de la mejor calidad',
+      price: 3500,
+      image_url: '/images/Apple.jpg',
+      category: 'Fruta',
+    },
+    {
+      id: 902,
+      name: 'Reloj Luxus Gold',
+      description: 'Reloj de lujo estilo oro',
+      price: 2400000,
+      image_url: '/images/reloj_luxus.jpg',
+      category: 'Accesorio',
+    },
+    {
+      id: 903,
+      name: 'Gafas Urban',
+      description: 'Gafas estilo urbano',
+      price: 185000,
+      image_url: '/images/Gafas.jpg',
+      category: 'Moda',
+    },
+  ];
 
-  useEffect(() => {
-    if (mounted && cart.length > 0) {
-      setIsCartOpen(true);
-    }
-  }, [cart.length, mounted]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
-      setProducts(data);
+      if (mountedRef.current) {
+        const dbProducts = Array.isArray(data) ? data : [];
+        setProducts([...dbProducts, ...localProducts]);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
-      setProducts([
-        {
-          id: 1,
-          name: 'Apple Premium',
-          description: 'Manzana Premium de la mejor calidad',
-          price: 3500,
-          image_url: '/hypertecnologian/Apple.jpg',
-          category: 'Fruta',
-        },
-        {
-          id: 2,
-          name: 'Reloj Luxus Gold',
-          description: 'Reloj de lujo estilo oro',
-          price: 2400000,
-          image_url: '/hypertecnologian/reloj_luxus.jpg',
-          category: 'Accesorio',
-        },
-        {
-          id: 3,
-          name: 'Gafas Urban',
-          description: 'Gafas estilo urbano',
-          price: 185000,
-          image_url: '/hypertecnologian/Gafas.jpg',
-          category: 'Moda',
-        },
-      ]);
+      if (mountedRef.current) {
+        setProducts(localProducts);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchProducts();
+    return () => { mountedRef.current = false; };
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      setIsCartOpen(true);
+    }
+  }, [cart.length]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => [...prev, product]);
@@ -91,8 +100,6 @@ export default function Home() {
 
   const heroTitle = 'Hypertecnologian';
   const heroLetters = heroTitle.split('');
-
-  if (!mounted) return null;
 
   return (
     <div
@@ -272,6 +279,71 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      <motion.button
+        onClick={() => setIsCartOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          width: 64,
+          height: 64,
+          borderRadius: '50%',
+          backgroundColor: 'var(--accent)',
+          border: 'none',
+          cursor: 'pointer',
+          boxShadow: 'var(--shadow-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: 0,
+        }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+        {cart.length > 0 && (
+          <motion.span
+            key={cart.length}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            style={{
+              position: 'absolute',
+              top: -4,
+              right: -4,
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              backgroundColor: '#d00',
+              color: 'white',
+              fontSize: 12,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {cart.length}
+          </motion.span>
+        )}
+      </motion.button>
 
       <AnimatePresence>
         {isCartOpen && (

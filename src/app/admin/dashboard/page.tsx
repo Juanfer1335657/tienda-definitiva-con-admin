@@ -14,23 +14,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch('/api/auth/check', { method: 'POST' });
-      if (!res.ok) {
-        router.push('/admin');
-      } else {
-        fetchStats();
-      }
-    } catch {
-      router.push('/admin');
-    }
-  };
-
   const fetchStats = async () => {
     try {
       const res = await fetch('/api/products');
@@ -42,6 +25,22 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/check', { method: 'POST' });
+        if (!res.ok) {
+          router.push('/admin');
+        } else {
+          fetchStats();
+        }
+      } catch {
+        router.push('/admin');
+      }
+    };
+    checkAuth();
+  }, []);
 
   const handleLogout = async () => {
     try {

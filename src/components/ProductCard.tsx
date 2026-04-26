@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 export interface Product {
   id: number;
@@ -45,19 +45,16 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         transition: 'box-shadow 0.3s ease',
       }}
     >
-      <div style={{ position: 'relative', paddingTop: '100%' }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', overflow: 'hidden', backgroundColor: '#f9f9f9' }}>
         <motion.img
           src={product.image_url || '/hypertecnologian/placeholder.jpg'}
           alt={product.name}
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
           }}
-          animate={{ scale: isHovered ? 1.1 : 1 }}
+          animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.4 }}
         />
         {product.category && (

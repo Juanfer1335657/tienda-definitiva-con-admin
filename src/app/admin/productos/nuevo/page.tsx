@@ -68,8 +68,8 @@ export default function NewProduct() {
       }
 
       router.push('/admin/productos');
-    } catch (err: any) {
-      setError(err.message || 'Error al crear producto');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear producto');
     } finally {
       setLoading(false);
     }

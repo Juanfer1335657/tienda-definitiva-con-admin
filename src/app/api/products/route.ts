@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProducts, getProduct, createProduct, updateProduct, deleteProduct, Product } from '@/lib/db';
+import { getProducts, createProduct, updateProduct, deleteProduct } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
 export async function GET() {

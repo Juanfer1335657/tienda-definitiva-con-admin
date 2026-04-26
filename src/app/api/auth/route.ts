@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { sql, getAdmin, createAdmin } from '@/lib/db';
+import { getAdmin, createAdmin } from '@/lib/db';
 import { setSession } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
