@@ -86,8 +86,6 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
 
   const cities = department ? departments.find(d => d.name === department)?.cities || [] : [];
 
-  const autoPricing = department ? getShippingPrice('servientrega', department) : null;
-
   const handleCalculate = () => {
     if (!department || !city || !address) return;
     
@@ -108,7 +106,8 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
     setSelectedProvider(provider);
   };
 
-  const selectedPricing = (selectedProvider || 'servientrega') && department ? getShippingPrice(selectedProvider || 'servientrega', department) : null;
+  const currentProvider = selectedProvider || 'servientrega';
+  const currentPricing = department ? getShippingPrice(currentProvider, department) : null;
 
   return (
     <motion.div
@@ -309,13 +308,13 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
               📍 Hacia: {city || '...'}, {department}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-              🚚 Transportadora: {selectedProvider === 'interrapidisimo' ? 'Interrapidisimo' : 'Servientrega'}
+              🚚 Transportadora: {currentProvider === 'interrapidisimo' ? 'Interrapidisimo' : 'Servientrega'}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              ⏱️ Tiempo estimado: {autoPricing?.days}
+              ⏱️ Tiempo estimado: {currentPricing?.days}
             </p>
             <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)', marginTop: 8 }}>
-              Costo de envío: ${autoPricing?.price.toLocaleString('es-CO')}
+              Costo de envío: ${currentPricing?.price.toLocaleString('es-CO')}
             </p>
           </motion.div>
         )}
