@@ -82,12 +82,36 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
   const [department, setDepartment] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
+  const [addressError, setAddressError] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'servientrega' | 'interrapidisimo' | null>(null);
 
   const cities = department ? departments.find(d => d.name === department)?.cities || [] : [];
 
+  const validateAddress = (addr: string): boolean => {
+    const patterns = [
+      /^(Carrera|Cra|Calle|Cl|Transversal|Transv|Av\.?|Avenida|Diagonal|Diag)\s*\d+[\s#\-]\d+[\sA-Za-z]*$/i,
+      /^(Carrera|Cra|Calle|Cl|Transversal|Transv|Av\.?|Avenida|Diagonal|Diag)\s*\d+[\s\-]\d+$/i,
+      /^\d+[\s#\-]\d+[\sA-Za-z]*$/i,
+    ];
+    return patterns.some(p => p.test(addr.trim()));
+  };
+
+  const handleAddressChange = (value: string) => {
+    setAddress(value);
+    if (value.length > 0 && !validateAddress(value)) {
+      setAddressError('Ingresa una dirección válida (ej: Cra 15 #45-67)');
+    } else {
+      setAddressError('');
+    }
+  };
+
   const handleCalculate = () => {
     if (!department || !city || !address) return;
+    
+    if (!validateAddress(address)) {
+      setAddressError('Ingresa una dirección válida (ej: Cra 15 #45-67)');
+      return;
+    }
     
     const provider = selectedProvider || 'servientrega';
     const { price, days } = getShippingPrice(provider, department);
@@ -232,17 +256,23 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
           <input
             type="text"
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            onChange={(e) => handleAddressChange(e.target.value)}
             placeholder="Ej: Cra 15 #45-67, Apto 301"
             style={{
               width: '100%',
               padding: 12,
-              border: '1px solid #ddd',
+              border: `1px solid ${addressError ? '#d00' : '#ddd'}`,
               borderRadius: 8,
               fontSize: 16,
               boxSizing: 'border-box',
             }}
           />
+          {addressError && (
+            <p style={{ fontSize: 12, color: '#d00', marginTop: 4 }}>{addressError}</p>
+          )}
+          <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+            Formato: Cra/Calle # número - número, Apartamento/Torre
+          </p>
         </div>
 
         {department && (
