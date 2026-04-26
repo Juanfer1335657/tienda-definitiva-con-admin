@@ -219,7 +219,7 @@ export default function EditProduct() {
               <input
                 type="file"
                 ref={fileInputRef}
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 multiple
                 onChange={handleImageChange}
                 style={{ display: 'none' }}
