@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 
 export interface Product {
@@ -28,16 +28,36 @@ function formatPrice(price: number): string {
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const images = product.images || [];
   const primaryImage = images.find(img => img.is_primary) || images[0];
   const currentImage = images[currentImageIndex] || primaryImage;
 
-  const nextImage = () => {
+  useEffect(() => {
     if (images.length > 1) {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      intervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      }, 5000);
     }
-  };
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [images.length]);
+
+  useEffect(() => {
+    if (isHovered && intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    } else if (!isHovered && images.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      }, 5000);
+    }
+  }, [isHovered, images.length]);
 
   return (
     <motion.div
@@ -63,9 +83,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           aspectRatio: '1 / 1', 
           overflow: 'hidden', 
           backgroundColor: '#f9f9f9',
-          cursor: images.length > 1 ? 'pointer' : 'default',
         }}
-        onClick={images.length > 1 ? nextImage : undefined}
       >
         <motion.img
           src={currentImage?.image_url || '/placeholder.jpg'}
@@ -101,38 +119,32 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         )}
 
         {images.length > 1 && (
-          <>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 12,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                gap: 6,
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIndex(index);
-                  }}
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    border: 'none',
-                    backgroundColor: index === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
-                />
-              ))}
-            </div>
-          </>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 12,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: 6,
+            }}
+          >
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: index === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
         )}
       </div>
       <div style={{ padding: 20 }}>

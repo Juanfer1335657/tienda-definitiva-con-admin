@@ -19,71 +19,63 @@ interface ShippingCalculatorProps {
   onClose: () => void;
 }
 
+const WAREHOUSE = { city: 'Manizales', department: 'Caldas' };
+
 const providers = [
   {
     id: 'servientrega' as const,
     name: 'Servientrega',
     logo: '🚚',
-    basePrice: 8000,
-    pricePerKg: 2500,
-    freeShippingAt: 150000,
   },
   {
     id: 'interrapidisimo' as const,
     name: 'Interrapidisimo',
     logo: '⚡',
-    basePrice: 6000,
-    pricePerKg: 2000,
-    freeShippingAt: 120000,
   },
 ];
 
-const estimatedDaysMap: Record<string, Record<string, string>> = {
-  servientrega: {
-    'Bogotá D.C.': '1-2 días',
-    'Antioquia': '2-3 días',
-    'Valle del Cauca': '2-3 días',
-    'Atlántico': '2-3 días',
-    'Cundinamarca': '1-2 días',
-    'Risaralda': '2-3 días',
-    'Tolima': '2-3 días',
-    'Huila': '2-3 días',
-    'Cauca': '3-4 días',
-    'Nariño': '3-5 días',
-    'Santander': '2-3 días',
-    'Norte de Santander': '3-4 días',
-    'default': '3-5 días',
-  },
-  interrapidisimo: {
-    'Bogotá D.C.': '1-2 días',
-    'Antioquia': '1-2 días',
-    'Valle del Cauca': '1-2 días',
-    'Atlántico': '1-2 días',
-    'Cundinamarca': '1-2 días',
-    'Risaralda': '2-3 días',
-    'default': '2-3 días',
-  },
+const shippingZones: Record<string, { servientrega: number; interrapidisimo: number; days: string }> = {
+  'Caldas': { servientrega: 5000, interrapidisimo: 4000, days: '1-2 días' },
+  'Risaralda': { servientrega: 6000, interrapidisimo: 5000, days: '1-2 días' },
+  'Quindío': { servientrega: 6000, interrapidisimo: 5000, days: '1-2 días' },
+  'Antioquia': { servientrega: 8000, interrapidisimo: 7000, days: '2-3 días' },
+  'Tolima': { servientrega: 8000, interrapidisimo: 7000, days: '2-3 días' },
+  'Huila': { servientrega: 9000, interrapidisimo: 8000, days: '2-3 días' },
+  'Cundinamarca': { servientrega: 10000, interrapidisimo: 9000, days: '2-3 días' },
+  'Bogotá D.C.': { servientrega: 10000, interrapidisimo: 9000, days: '2-3 días' },
+  'Valle del Cauca': { servientrega: 12000, interrapidisimo: 10000, days: '3-4 días' },
+  'Cauca': { servientrega: 12000, interrapidisimo: 10000, days: '3-4 días' },
+  'Nariño': { servientrega: 14000, interrapidisimo: 12000, days: '3-4 días' },
+  'Casanare': { servientrega: 14000, interrapidisimo: 12000, days: '3-4 días' },
+  'Meta': { servientrega: 14000, interrapidisimo: 12000, days: '3-4 días' },
+  'Santander': { servientrega: 15000, interrapidisimo: 13000, days: '3-4 días' },
+  'Norte de Santander': { servientrega: 16000, interrapidisimo: 14000, days: '4-5 días' },
+  'Boyacá': { servientrega: 11000, interrapidisimo: 9500, days: '2-3 días' },
+  'Arauca': { servientrega: 18000, interrapidisimo: 16000, days: '4-5 días' },
+  'Atlántico': { servientrega: 18000, interrapidisimo: 15000, days: '4-5 días' },
+  'Bolívar': { servientrega: 20000, interrapidisimo: 17000, days: '4-5 días' },
+  'Córdoba': { servientrega: 18000, interrapidisimo: 15000, days: '4-5 días' },
+  'Sucre': { servientrega: 20000, interrapidisimo: 17000, days: '4-5 días' },
+  'Cesar': { servientrega: 20000, interrapidisimo: 17000, days: '4-5 días' },
+  'La Guajira': { servientrega: 25000, interrapidisimo: 22000, days: '5-6 días' },
+  'Magdalena': { servientrega: 22000, interrapidisimo: 19000, days: '5-6 días' },
+  'San Andrés y Providencia': { servientrega: 35000, interrapidisimo: 30000, days: '6-7 días' },
+  'Caquetá': { servientrega: 18000, interrapidisimo: 15000, days: '4-5 días' },
+  'Putumayo': { servientrega: 20000, interrapidisimo: 17000, days: '5-6 días' },
+  'Amazonas': { servientrega: 35000, interrapidisimo: 30000, days: '6-8 días' },
+  'Guainía': { servientrega: 35000, interrapidisimo: 30000, days: '6-8 días' },
+  'Guaviare': { servientrega: 22000, interrapidisimo: 19000, days: '5-6 días' },
+  'Vaupés': { servientrega: 40000, interrapidisimo: 35000, days: '7-10 días' },
+  'Vichada': { servientrega: 35000, interrapidisimo: 30000, days: '6-8 días' },
+  'default': { servientrega: 15000, interrapidisimo: 13000, days: '4-5 días' },
 };
 
-function calculateShipping(provider: typeof providers[0], weight: number, total: number, isLocal: boolean): number {
-  const baseWeight = 0.5;
-  const additionalWeight = Math.max(0, weight - baseWeight);
-  let price = provider.basePrice + (additionalWeight * provider.pricePerKg);
-  
-  if (isLocal) {
-    price = provider.basePrice * 0.7;
-  }
-  
-  if (total >= provider.freeShippingAt) {
-    price = 0;
-  }
-  
-  return Math.round(price);
-}
-
-function getEstimatedDays(provider: 'servientrega' | 'interrapidisimo', department: string): string {
-  const departmentDays = estimatedDaysMap[provider][department];
-  return departmentDays || estimatedDaysMap[provider]['default'];
+function getShippingPrice(provider: 'servientrega' | 'interrapidisimo', department: string): { price: number; days: string } {
+  const zone = shippingZones[department] || shippingZones['default'];
+  return {
+    price: provider === 'servientrega' ? zone.servientrega : zone.interrapidisimo,
+    days: zone.days,
+  };
 }
 
 export default function ShippingCalculator({ total, onCalculate, onClose }: ShippingCalculatorProps) {
@@ -91,19 +83,13 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'servientrega' | 'interrapidisimo' | null>(null);
-  const [weight] = useState(0.5);
-  const [calculations, setCalculations] = useState<Array<{ provider: typeof providers[0]; price: number; days: string }>>([]);
 
   const cities = department ? departments.find(d => d.name === department)?.cities || [] : [];
-
-  const isLocal = department === 'Cundinamarca' || department === 'Bogotá D.C.';
 
   const handleCalculate = () => {
     if (!department || !city || !address || !selectedProvider) return;
     
-    const provider = providers.find(p => p.id === selectedProvider)!;
-    const price = calculateShipping(provider, weight, total, isLocal);
-    const days = getEstimatedDays(selectedProvider, department);
+    const { price, days } = getShippingPrice(selectedProvider, department);
     
     onCalculate({
       department,
@@ -115,17 +101,11 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
     });
   };
 
-  const handleCheckPrices = () => {
-    if (!department) return;
-    
-    const results = providers.map(provider => ({
-      provider,
-      price: calculateShipping(provider, weight, total, isLocal),
-      days: getEstimatedDays(provider.id, department),
-    }));
-    
-    setCalculations(results);
+  const handleSelectProvider = (provider: 'servientrega' | 'interrapidisimo') => {
+    setSelectedProvider(provider);
   };
+
+  const selectedPricing = selectedProvider && department ? getShippingPrice(selectedProvider, department) : null;
 
   return (
     <motion.div
@@ -182,6 +162,12 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
           </motion.button>
         </div>
 
+        <div style={{ backgroundColor: '#f0f9f4', padding: 12, borderRadius: 8, marginBottom: 20 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
+            📦 Envío desde <strong>{WAREHOUSE.city}, {WAREHOUSE.department}</strong>
+          </p>
+        </div>
+
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
             Departamento *
@@ -191,7 +177,7 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
             onChange={(e) => {
               setDepartment(e.target.value);
               setCity('');
-              setCalculations([]);
+              setSelectedProvider(null);
             }}
             style={{
               width: '100%',
@@ -257,82 +243,78 @@ export default function ShippingCalculator({ total, onCalculate, onClose }: Ship
           />
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
-            Peso estimado: {weight} kg
-          </p>
-          {total >= 120000 && (
-            <p style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>
-              ¡Tu compra qualifies para envío gratis con algunos proveedores!
-            </p>
-          )}
-        </div>
-
         {department && (
-          <motion.button
-            onClick={handleCheckPrices}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            style={{
-              width: '100%',
-              padding: 14,
-              backgroundColor: '#f0f0f0',
-              color: 'var(--text-primary)',
-              border: 'none',
-              borderRadius: 12,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-              marginBottom: 20,
-            }}
-          >
-            Ver precios de envío
-          </motion.button>
-        )}
-
-        {calculations.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>
-              Opciones de envío:
+              Selecciona transportadora:
             </p>
-            {calculations.map(({ provider, price, days }) => (
-              <motion.div
-                key={provider.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                onClick={() => setSelectedProvider(provider.id)}
-                style={{
-                  padding: 16,
-                  border: `2px solid ${selectedProvider === provider.id ? 'var(--accent)' : '#eee'}`,
-                  borderRadius: 12,
-                  marginBottom: 12,
-                  cursor: 'pointer',
-                  backgroundColor: selectedProvider === provider.id ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              {providers.map((provider) => {
+                const pricing = getShippingPrice(provider.id, department);
+                return (
+                  <motion.div
+                    key={provider.id}
+                    onClick={() => handleSelectProvider(provider.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      flex: 1,
+                      padding: 16,
+                      border: `2px solid ${selectedProvider === provider.id ? 'var(--accent)' : '#eee'}`,
+                      borderRadius: 12,
+                      cursor: 'pointer',
+                      backgroundColor: selectedProvider === provider.id ? 'rgba(16, 185, 129, 0.05)' : 'white',
+                      textAlign: 'center',
+                    }}
+                  >
                     <span style={{ fontSize: 24 }}>{provider.logo}</span>
-                    <div>
-                      <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{provider.name}</p>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Tiempo: {days}</p>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    {price === 0 ? (
-                      <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>GRATIS</p>
-                    ) : (
-                      <>
-                        <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-                          ${price.toLocaleString('es-CO')}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14, marginTop: 8 }}>
+                      {provider.name}
+                    </p>
+                    <p style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 16, marginTop: 4 }}>
+                      ${pricing.price.toLocaleString('es-CO')}
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                      {pricing.days}
+                    </p>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
+        )}
+
+        {selectedProvider && department && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              backgroundColor: '#f0f9f4',
+              padding: 16,
+              borderRadius: 12,
+              marginBottom: 20,
+              border: '1px solid var(--accent)',
+            }}
+          >
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+              Resumen del envío:
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              📍 De: {WAREHOUSE.city}, {WAREHOUSE.department}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              📍 Hacia: {city}, {department}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+              🚚 Transportadora: {selectedProvider === 'servientrega' ? 'Servientrega' : 'Interrapidisimo'}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              ⏱️ Tiempo estimado: {selectedPricing?.days}
+            </p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)', marginTop: 8 }}>
+              Costo de envío: ${selectedPricing?.price.toLocaleString('es-CO')}
+            </p>
+          </motion.div>
         )}
 
         <div style={{ display: 'flex', gap: 12 }}>
