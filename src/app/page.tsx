@@ -32,8 +32,17 @@ export default function Home() {
     fetchProducts();
   }, [fetchProducts]);
 
+  useEffect(() => {
+    if (cart.length > 0 && !isCartOpen) {
+      setIsCartOpen(true);
+    }
+  }, [cart.length, isCartOpen]);
+
   const addToCart = useCallback((product: Product) => {
-    setCart(prev => [...prev, product]);
+    setCart(prev => {
+      const newCart = [...prev, product];
+      return newCart;
+    });
   }, []);
 
   const removeFromCart = useCallback((id: number) => {
@@ -47,11 +56,9 @@ export default function Home() {
   const openCart = useCallback(() => setIsCartOpen(true), []);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
-  const cartCount = useMemo(() => cart.length, [cart]);
-
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      <Header cartCount={cartCount} onCartClick={openCart} />
+      <Header cartCount={cart.length} onCartClick={openCart} />
 
       <motion.section
         initial={{ opacity: 0 }}
@@ -189,7 +196,7 @@ export default function Home() {
           <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
         </svg>
-        {cartCount > 0 && (
+        {cart.length > 0 && (
           <span style={{
             position: 'absolute',
             top: -4,
@@ -205,7 +212,7 @@ export default function Home() {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            {cartCount}
+            {cart.length}
           </span>
         )}
       </motion.button>
