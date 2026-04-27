@@ -202,152 +202,56 @@ export default function AdminProducts() {
             </Link>
           </motion.div>
         ) : (
-          <div
-            style={{
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: 'var(--radius)',
-              overflow: 'hidden',
-              boxShadow: 'var(--shadow-md)',
-            }}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f5f5f5' }}>
-                  <th style={{ padding: 16, textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                    Imágenes
-                  </th>
-                  <th style={{ padding: 16, textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                    Nombre
-                  </th>
-                  <th style={{ padding: 16, textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                    Precio
-                  </th>
-                  <th style={{ padding: 16, textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                    Categoría
-                  </th>
-                  <th style={{ padding: 16, textAlign: 'right', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {products.map((product, index) => (
-                    <motion.tr
-                      key={product.id}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ delay: index * 0.05 }}
-                      style={{ borderTop: '1px solid #eee' }}
+          <div className="admin-products-grid">
+            <AnimatePresence>
+              {products.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="admin-product-card"
+                >
+                  <div className="admin-product-images">
+                    {product.images?.slice(0, 3).map((img) => (
+                      <img
+                        key={img.id}
+                        src={img.image_url}
+                        alt=""
+                        className="admin-product-thumb"
+                        style={img.is_primary ? { border: '2px solid var(--accent)' } : {}}
+                      />
+                    ))}
+                    {(product.images?.length || 0) > 3 && (
+                      <div className="admin-product-more">
+                        +{product.images!.length - 3}
+                      </div>
+                    )}
+                  </div>
+                  <div className="admin-product-info">
+                    <h3 className="admin-product-name">{product.name}</h3>
+                    <p className="admin-product-desc">{product.description}</p>
+                    <span className="admin-product-price">{formatPrice(product.price)}</span>
+                    <span className="admin-product-category">{product.category || 'Sin categoría'}</span>
+                  </div>
+                  <div className="admin-product-actions">
+                    <Link href={`/admin/productos/${product.id}`} className="admin-btn-edit">
+                      Editar
+                    </Link>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleDelete(product.id)}
+                      disabled={deleting === product.id}
+                      className="admin-btn-delete"
                     >
-                      <td style={{ padding: 16 }}>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          {product.images?.slice(0, 3).map((img) => (
-                            <img
-                              key={img.id}
-                              src={img.image_url}
-                              alt=""
-                              style={{
-                                width: 50,
-                                height: 50,
-                                objectFit: 'cover',
-                                borderRadius: 8,
-                                border: img.is_primary ? '2px solid var(--accent)' : '1px solid #eee',
-                              }}
-                            />
-                          ))}
-                          {(product.images?.length || 0) > 3 && (
-                            <div
-                              style={{
-                                width: 50,
-                                height: 50,
-                                borderRadius: 8,
-                                backgroundColor: '#f0f0f0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 12,
-                                color: 'var(--text-secondary)',
-                              }}
-                            >
-                              +{product.images!.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ padding: 16 }}>
-                        <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {product.name}
-                        </p>
-                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-                          {product.description}
-                        </p>
-                      </td>
-                      <td style={{ padding: 16 }}>
-                        <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                          {formatPrice(product.price)}
-                        </span>
-                      </td>
-                      <td style={{ padding: 16 }}>
-                        <span
-                          style={{
-                            backgroundColor: '#f0f0f0',
-                            padding: '4px 12px',
-                            borderRadius: 20,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: 'var(--text-secondary)',
-                          }}
-                        >
-                          {product.category || 'Sin categoría'}
-                        </span>
-                      </td>
-                      <td style={{ padding: 16, textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                          <Link href={`/admin/productos/${product.id}`}>
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'var(--accent)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: 8,
-                                fontSize: 13,
-                                cursor: 'pointer',
-                                textDecoration: 'none',
-                              }}
-                            >
-                              Editar
-                            </motion.button>
-                          </Link>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => handleDelete(product.id)}
-                            disabled={deleting === product.id}
-                            style={{
-                              padding: '8px 16px',
-                              backgroundColor: '#fee',
-                              color: '#d00',
-                              border: 'none',
-                              borderRadius: 8,
-                              fontSize: 13,
-                              cursor: deleting === product.id ? 'not-allowed' : 'pointer',
-                              opacity: deleting === product.id ? 0.5 : 1,
-                            }}
-                          >
-                            {deleting === product.id ? '...' : 'Eliminar'}
-                          </motion.button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                      {deleting === product.id ? '...' : 'Eliminar'}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </main>
