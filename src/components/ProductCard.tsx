@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion } from 'motion/react';
+import Image from 'next/image';
 
 export interface Product {
   id: number;
@@ -26,54 +27,43 @@ function formatPrice(price: number): string {
 }
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const images = product.images || [];
-  const primaryImage = images.find(img => img.is_primary) || images[0];
-  const currentImage = images[currentImageIndex] || primaryImage;
+  const images = useMemo(() => product.images || [], [product.images]);
+  const displayImage = useMemo(() => {
+    if (images.length === 0) return null;
+    const primary = images.find(img => img.is_primary);
+    return primary || images[0];
+  }, [images]);
 
-  useEffect(() => {
-    if (images.length > 1) {
-      intervalRef.current = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % images.length);
-      }, 5000);
-    }
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+  const rotateImage = useCallback(() => {
+    setCurrentImageIndex(prev => (prev + 1) % images.length);
   }, [images.length]);
 
   useEffect(() => {
-    if (isHovered && intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    } else if (!isHovered && images.length > 1) {
-      intervalRef.current = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % images.length);
-      }, 5000);
+    if (images.length > 1) {
+      intervalRef.current = setInterval(rotateImage, 5000);
     }
-  }, [isHovered, images.length]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [images.length, rotateImage]);
+
+  const handleAddToCart = useCallback(() => {
+    onAddToCart(product);
+  }, [onAddToCart, product]);
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.02 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
       style={{
         backgroundColor: 'var(--bg-secondary)',
         borderRadius: 'var(--radius)',
         overflow: 'hidden',
-        boxShadow: isHovered ? 'var(--shadow-lg)' : 'var(--shadow-md)',
-        transition: 'box-shadow 0.3s ease',
+        boxShadow: 'var(--shadow-md)',
       }}
     >
       <div 
@@ -85,22 +75,19 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           backgroundColor: '#f9f9f9',
         }}
       >
-        <motion.img
-          src={currentImage?.image_url || '/placeholder.jpg'}
-          alt={product.name}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-          }}
-          animate={{ scale: isHovered ? 1.05 : 1 }}
-          transition={{ duration: 0.4 }}
-        />
+        {displayImage && (
+          <Image
+            src={displayImage.image_url}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            style={{ objectFit: 'contain' }}
+            priority={false}
+          />
+        )}
         
         {product.category && (
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
+          <span
             style={{
               position: 'absolute',
               top: 12,
@@ -111,11 +98,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               borderRadius: 20,
               fontSize: 12,
               fontWeight: 600,
-              textTransform: 'uppercase',
             }}
           >
             {product.category}
-          </motion.span>
+          </span>
         )}
 
         {images.length > 1 && (
@@ -133,6 +119,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
+                aria-label={`Ver imagen ${index + 1}`}
                 style={{
                   width: 8,
                   height: 8,
@@ -187,9 +174,8 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           </span>
         </div>
         <motion.button
-          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onAddToCart(product)}
+          onClick={handleAddToCart}
           style={{
             width: '100%',
             padding: '12px 20px',
@@ -200,7 +186,6 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             fontSize: 14,
             fontWeight: 600,
             cursor: 'pointer',
-            transition: 'background-color 0.2s',
           }}
         >
           Agregar al carrito

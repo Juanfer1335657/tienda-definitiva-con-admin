@@ -25,25 +25,24 @@ export interface ProductWithImages extends Product {
 
 export async function getProducts(): Promise<ProductWithImages[]> {
   const products = await sql`SELECT * FROM products ORDER BY created_at DESC`;
-  const productsData = products as unknown as Product[];
+  const allImages = await sql`SELECT * FROM product_images ORDER BY is_primary DESC, created_at ASC`;
   
-  const productsWithImages: ProductWithImages[] = await Promise.all(
-    productsData.map(async (product) => {
-      const images = await sql`SELECT * FROM product_images WHERE product_id = ${product.id} ORDER BY is_primary DESC, created_at ASC`;
-      return {
-        ...product,
-        images: images as unknown as ProductImage[],
-      };
-    })
-  );
+  const imageMap = new Map<number, ProductImage[]>();
+  for (const img of allImages as unknown as ProductImage[]) {
+    const list = imageMap.get(img.product_id) || [];
+    list.push(img);
+    imageMap.set(img.product_id, list);
+  }
   
-  return productsWithImages;
+  return (products as unknown as Product[]).map(p => ({
+    ...p,
+    images: imageMap.get(p.id) || [],
+  }));
 }
 
 export async function getProduct(id: number): Promise<ProductWithImages | null> {
   const result = await sql`SELECT * FROM products WHERE id = ${id}`;
-  const products = result as unknown as Product[];
-  const product = products[0];
+  const product = (result as unknown as Product[])[0];
   
   if (!product) return null;
   
